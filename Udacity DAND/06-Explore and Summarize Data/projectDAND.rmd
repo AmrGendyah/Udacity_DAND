@@ -1,0 +1,726 @@
+---
+editor_options:
+  chunk_output_type: console
+output:
+  html_document: default
+  pdf_document: default
+---
+Amr Mohammad Soliman 
+========================================================
+
+This data set contains 113,937 loans with 81 variables on each loan,
+including loan amount, borrower rate (or interest rate), 
+current loan  status, borrower income, borrower employment 
+status,and the latest payment information.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(gridExtra)
+
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+pld <- read.csv("prosperLoanData.csv")
+```
+# Univariate Plots Section
+
+## BorrowerAPR and BorrowerRate
+
+#### Histogram
+
+```{r echo=FALSE,message=FALSE, warning=FALSE, Univariate_Plots}
+# Plot a histogram of the Borrower Rate
+p1 <- ggplot(aes(x = BorrowerRate), data = pld) + geom_histogram() 
+
+# Plot a histogram of the Borrower APR
+p2 <- ggplot(aes(x = BorrowerAPR), data = pld) + geom_histogram() 
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+
+#### Boxplots
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+# Plot a boxplot of the Borrower APR
+p1 <- ggplot(aes(x=1, y=BorrowerAPR), data = pld) +
+  geom_boxplot() + 
+  coord_cartesian(ylim = c(0,0.3))
+
+# Plot a boxplot of the Borrower Rate
+p2 <- ggplot(aes(x = 1, y=BorrowerRate), data = pld) + 
+  geom_boxplot() + 
+  coord_cartesian(ylim = c(0,0.3))
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+### Display the mean and range of the BorrowerRate
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+summary(pld$BorrowerRate)
+```
+
+### Display the mean and range of the BorrowerAPR
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+summary(pld$BorrowerAPR)
+```
+The distribution of BorrowerAPR and BorrowerRate should be\
+similar with  slight difference since the APR is always\
+higher than the interest rate.
+
+## Employment status
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = EmploymentStatus), 
+       data = subset(pld, !is.na(EmploymentStatus))) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 30))
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+by(pld$BorrowerRate, pld$EmploymentStatus, summary)
+```
+The vast majority of borrowers are Employed/
+following by Full-time
+
+## Income Range buckets
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(pld, aes(x = IncomeRange)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+The income ranges show that the vast majority of\
+borrowers make less than $75,000 per year.
+
+## Loan Status 
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(pld, aes(x = LoanStatus)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+It appears that a large majority of loans are/
+either Completed or Curren
+
+## The Term to maturity for each loan
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(pld, aes(x = Term)) +
+  geom_histogram() 
+
+summary(pld$Term)
+```
+
+The majority of of loans are short term at 36 months. 
+
+## Histogram of Stated Monthly Income
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+p1 <- ggplot(pld, aes(x = StatedMonthlyIncome),  binwidth = 30) +
+  geom_histogram() 
+
+p2 <- ggplot(pld, aes(x = StatedMonthlyIncome),  binwidth = 30) +
+  geom_histogram() + 
+  scale_x_continuous(limits = c(0, quantile(pld$StatedMonthlyIncome, 0.99)))
+
+p3 <- ggplot(pld, aes(x = StatedMonthlyIncome),  binwidth = 30) +
+  geom_histogram() + 
+  scale_x_log10()
+
+grid.arrange(p1, p2, p3, ncol = 3)
+
+summary(pld$StatedMonthlyIncome)
+```
+
+The histogram plot of the original data is highly right skewed.\
+So I used summary function and find that the maximum\
+value is 1750003, which is likely to be an error.\
+So in the next 2 plots, I removed the top 1% data\
+from the original and I used scale_x_log10 to get\
+more reasonable plot.
+
+## Histogram of the Debt To Income Ratio
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = DebtToIncomeRatio),data = subset(pld, !is.na(DebtToIncomeRatio))) +
+ geom_histogram() +
+scale_x_continuous(limits = c(0,1))
+
+summary(pld$DebtToIncomeRatio)
+```
+
+The histogram is right skewed, after filtering the NA values\
+and excluding the outliers.After using summary function,\
+I find that the maximum value is 10.010\
+,which is likely to be an error.
+
+## Histogram of the Available Bank card Credit
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(pld, aes(x = AvailableBankcardCredit)) +
+ geom_histogram() +
+  scale_x_continuous(limits = c(0, 1e+05))
+
+summary(pld$AvailableBankcardCredit)
+```
+
+Most of borrowers have low values of Available Bank card Credit
+
+
+## BorrowerRate by credit grade
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = BorrowerRate), data = subset(pld, !is.na(CreditGrade))) + geom_histogram() +
+  facet_wrap(~CreditGrade)
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+by(pld$BorrowerRate, pld$CreditGrade, summary)
+```
+
+The most of BorrowerRate is (B) Grade
+
+## BorrowerState
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = BorrowerState), 
+       data = subset(pld, !is.na(BorrowerState))) +
+  geom_histogram(stat = 'count') +
+  theme(axis.text.x=element_text(angle=90, hjust=1, size=6))
+
+```
+
+Most of borrowers are from CA
+
+## Occupation
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ ggplot(aes(x = Occupation), data = subset(pld, !is.na(Occupation))) + geom_histogram(stat = 'count') +
+  theme(axis.text.x = element_text(angle = 90, hjust=1, size = 6))
+```
+
+‘Other’ and ‘Professional’ stood out in the occupation chart. \ 
+This shows that many borrowers decided to choose \ 
+“other” and “professional” instead of their real occupation.
+
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+#Removing Other and professional
+occ=subset(pld, pld$Occupation!='Other' & 
+               pld$Occupation!='Professional' )
+
+ggplot(aes(x=Occupation), data = occ)+
+  geom_bar()+
+  ylab('Counts')+
+  theme(axis.text.x=element_text(angle=90, hjust=1, size = 6))
+```
+
+
+After removing the 'Others' and 'Professional' data, \ 
+the top three occupations counts are 'computer programmer', \ 
+'Excutives', and 'Teacher'. 
+
+
+```{r echo=FALSE}
+occ=subset(pld, pld$Occupation!='Other' & 
+               pld$Occupation!='Professional' )
+ggplot(aes(x=Occupation), data = occ)+
+  geom_bar()+
+  ylab('Counts')+
+  theme(axis.text.x=element_text(angle=90, hjust=1, size = 6))
+```
+
+## BorrowRAte by IsBorrowerHomeowner
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = BorrowerRate), data = subset(pld, !is.na(IsBorrowerHomeowner))) + geom_histogram() +
+  facet_wrap(~IsBorrowerHomeowner)
+
+qplot(x = BorrowerRate, data = subset(pld, !is.na(IsBorrowerHomeowner)), 
+      geom = 'freqpoly',color = IsBorrowerHomeowner) 
+
+by(pld$BorrowerRate, pld$IsBorrowerHomeowner, summary)
+```
+
+The borrowers who aren't homeowners are slighty\
+more than the homeowners
+
+## BankCardUtilization
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+ggplot(aes(x = BankcardUtilization), data = pld) + 
+  geom_histogram() +
+  scale_x_continuous(limits = c(0,1))
+
+summary(pld$BankcardUtilization)
+
+```
+Being left skewed makes sense, because most of the \ 
+borrowers might have almost maxed out their credit limits
+
+## Rating
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+p1 <- ggplot(data = subset(pld, !is.na(ProsperRating..Alpha.))) +
+  geom_bar(aes(x = ProsperRating..Alpha.))
+
+p2 <- ggplot(data = subset(pld, !is.na(ProsperRating..numeric.))) +
+  geom_bar(aes(x = ProsperRating..numeric.))
+
+grid.arrange(p1, p2,ncol = 2)
+```
+
+#### Summary of ProsperRating..Alpha.
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+summary(pld$ProsperRating..Alpha.)
+```
+
+#### Summary of ProsperRating..numeric.
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+summary(pld$ProsperRating..numeric.)
+```
+
+#### The mean of ProsperRating..numeric. for ProsperRating..Alpha.
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+by(pld$ProsperRating..numeric., pld$ProsperRating..Alpha., mean)
+```
+The most common rating is C(4) follows by B(5),\
+A(6) and D(3).The most common of borrowers have\
+rating (C) The highest rating (AA) has the lowest\
+number of borrowers.
+
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+There are 113,979 loan lists in the data set with 81 variables\
+from 2005 Nov to 2014 Mar. 
+```{r, echo=FALSE}
+str(pld)
+```
+
+### What is/are the main feature(s) of interest in your dataset?
+* BorrowerAPR
+* BorrowerRate
+* BorrowerState
+* Employment status
+* Income Range buckets
+* Loan Status
+* The Term
+* Stated Monthly Income
+* Debt To Income Ratio
+* Available Bank card Credit
+* Credit grade
+* Occupation
+* BankCardUtilization
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+* Employment Duration
+* Loan Original Amount
+* Investors
+* Employment Status
+* Prosper Rating
+
+### Did you create any new variables from existing variables in the dataset?
+No, I didn't
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+No, I didn't perform any operations on the data
+
+
+
+# Bivariate Plots Section
+## Scatterplot Matrices
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+ggpairs(pld[,c('LoanOriginalAmount', 'Investors', 'Term',
+                'EmploymentStatus', 'ProsperRating..Alpha.',
+                'BorrowerRate', 'MonthlyLoanPayment')])
+```
+
+
+MonthlyLoanPayment has 2 stronge relationships with\
+LoanOriginalAmount and Term
+
+## The relationship between Loan Original Amount and Number of Investors
+
+```{r echo=FALSE,warning=FALSE}
+ggplot( data = pld) + 
+  geom_jitter(aes(x = LoanOriginalAmount, y = Investors),alpha = 1/20) +
+ 
+  ggtitle("Loan Original Amount vs Number of Investors") +
+  xlab("Loan Original Amount")
+```
+
+
+Larger loans have more investors
+
+## Relationship between loan amount and terms.
+
+```{r echo=FALSE, warning=FALSE}
+ggplot(data = pld) + 
+  geom_boxplot(aes(x = as.character(Term), y = LoanOriginalAmount)) +
+  ggtitle("Term vs Loan Original Amount") +
+  xlab("Term") +
+  ylab("Loan Original Amount")
+```
+
+```{r echo=FALSE, warning=FALSE} 
+by(pld$LoanOriginalAmount, pld$Term, summary)
+```
+
+
+The loan amonts are getting larger with longer terms. 
+
+## Employment status and loan amount
+
+```{r echo=FALSE, warning=FALSE}
+ggplot(aes(x = EmploymentStatus, y = LoanOriginalAmount), data = pld) +
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0, quantile(pld$LoanOriginalAmount, 0.99))) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+Employed people requested more loans and not employed people\
+wanted more loan than part-time employed people
+
+## Prosper Rating against borrower rate
+
+```{r echo=FALSE, warning=FALSE}
+ggplot(aes(x = ProsperRating..Alpha., y = BorrowerRate), data = pld) + 
+  geom_boxplot()
+```
+
+As we can see The better rating belongs to lower borrower rate. 
+
+## Relationship of term and borrower rate
+
+```{r echo=FALSE, warning=FALSE}
+ggplot(aes(x = factor(Term), y = BorrowerRate), data = pld) +
+ geom_boxplot() + 
+  coord_cartesian(ylim = c(0,0.27))
+```
+
+The median of 60 month term is the highest one,\
+while the 12 month has the minimum one.
+
+## MonthlyLoanPayment vs. Occupations
+
+```{r echo=FALSE}
+ggplot(aes(y=MonthlyLoanPayment, x=Occupation), data = pld)+
+  stat_summary(fun.y=mean, geom='bar')+
+  theme(axis.text.x=element_text(angle=90, hjust=1,size=6))+
+  geom_bar(data = subset(pld,
+                    pld$Occupation=='Judge'|
+                    pld$Occupation=='Doctor'|
+                    pld$Occupation=='Pharmacist'), 
+           aes(y=MonthlyLoanPayment, x=Occupation), 
+           stat = 'summary', 
+           fun.y=mean, 
+           fill="#cf4c35")+
+  ylab('Monthly Payment ($)')
+  
+```
+
+The top 3 occupations have high monthly loan payment are Judge,\
+Doctor, and Pharmacist.The groups that have lower monthly loan\ 
+payment are students.
+
+
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+
+* The number of investors is increasing with higher prosper score.
+* The better rating belongs to lower borrower rate.
+* The loan amonts are getting larger with longer terms. 
+* Employed people requested more loans and not employed people
+* The top 3 occupations have high monthly loan payment are\
+Judge, Doctor,and Pharmacist.The monthly loan payment should\
+be positively correlated with the salary.The top 3 listed\
+occupations are all best-paying jobs according to\ [CNBC](http://www.cnbc.com/2016/07/26/the-25-highest-paying\
+-jobs-in-america.\html), and the groups that have lower monthly loan\ 
+payment are students.
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+I noticed that employed people are more likely to\
+loan than others. Also debt to income ratio for\
+rating AA is the lowest one.
+
+### What was the strongest relationship
+you found?
+
+MonthlyLoanPayment with Term (0.932)
+
+
+# Multivariate Plots Section
+
+```{r echo=FALSE,warning=FALSE, message=FALSE}
+# create new datetime variable for the listing created date
+pld$ListingDateTime <- strptime(x = as.character(pld$ListingCreationDate),
+                                format = "%Y-%m-%d")
+
+pld$Month <- as.Date(cut(pld$ListingDateTime,
+  breaks = "month"))
+
+pld$BankcardUtilization.bucket <- cut(pld$BankcardUtilization, 
+                                           c(0, 0.25, 0.5, 0.75, 1.0, 5.0))
+```
+## Scatterplot Matrices
+```{r echo=FALSE, warning=FALSE, message=FALSE,Multivariate_Plots}
+ggpairs(pld[,c('Month','BankcardUtilization.bucket',
+               'BankcardUtilization','IncomeRange', 
+               'IsBorrowerHomeowner','BorrowerRate', 
+               'CreditScoreRangeLower')])
+```
+
+## Borrower Rate vs Income Range vs Is Borrower Homeowner
+
+```{r echo=FALSE,warning=FALSE, message=FALSE}
+ggplot(aes(x = as.factor(IncomeRange), y = BorrowerRate), 
+       data = subset(pld, 
+                     IncomeRange != 'Not employed' & 
+                       IncomeRange != 'Not displayed'& 
+                       IncomeRange != '$0')) +
+  geom_boxplot(aes(fill = IsBorrowerHomeowner)) +
+  ggtitle("Income Range vs Borrower Rate (by Home Owner)") +
+  guides(fill = guide_legend(title = "Is Borrower Homeowner")) +
+  xlab("Income Range") +
+  ylab("Borrower Rate")  +
+   theme(text = element_text(size=12), 
+        axis.text.x = element_text(angle=90, vjust=1))
+```
+
+As we can see borrowers with higher income, who are home owners\
+have lower borrower rates. 
+
+## Credit Scores vs Borrower rate vs Bankcard Utilization 
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(data = subset(pld, CreditScoreRangeLower > 400 & 
+                       BankcardUtilization < 5.0 & 
+                       !is.na(BankcardUtilization)), 
+       aes(x = factor(CreditScoreRangeLower), 
+           y = BorrowerRate, 
+           fill = BankcardUtilization.bucket)) + 
+  geom_boxplot() +
+  theme(legend.position = 'bottom')
+```
+
+In general, a higher bankcard utilization rate corresponds\
+with lower credit scores and higher interest rates.
+
+## Interest Rate vs. Time vs. Homeowner
+
+```{r echo=FALSE,warning=FALSE, message=FALSE}
+ggplot(aes(x=Month, y=BorrowerRate, color=as.factor(IsBorrowerHomeowner)),
+       data = subset(pld, !is.na(pld$IsBorrowerHomeowner)))+
+  stat_summary(fun.y = mean, geom = 'point') + 
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  scale_color_discrete(guide = guide_legend(title = "Homeowner"),
+                       labels=c('No','Yes'))+
+  xlab('Time')+
+  ylab('Borrower Rate (%)')
+```
+
+The interest rate for homeowners are generally lower\
+than non-homeowners
+
+## Relationship between Delinquencies and Employment Status
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(aes(x = DelinquenciesLast7Years, y = AmountDelinquent,
+                      color = as.factor(EmploymentStatus)),
+       data = subset(pld, AmountDelinquent > 0 & 
+                            EmploymentStatus != "" )) +
+  geom_point(alpha = 0.1, size = 1) +
+  geom_smooth(method = "lm", se = FALSE,size=2) +
+  xlim(0, quantile(pld$DelinquenciesLast7Years, 0.99, na.rm = T)) +
+  ylim(0, quantile(pld$AmountDelinquent, 0.99, na.rm = T)) +
+  scale_color_discrete(guide = guide_legend(title = "EmploymentStatus")) +
+ggtitle('Relationship between Delinquencies and Employment Status')
+```
+
+From the above we can see relationship between the\
+amount borrowers were delinquent and the number of\
+delinquencies they've had over the last 7 years then\
+separated that by employment status.It is obvious that\
+$Self-employed$ then $Other$ are the maximum. 
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+* Homeowners usually have lower risk of making defaulted loans
+  since bank can use their house as collateral.
+  
+* A higher bankcard utilization rate corresponds with lower credit
+  scores and higher interest rates.
+
+### Were there any interesting or surprising interactions between features?
+* I've observed that employed people are more likely to borrow money.
+
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+There was no need for any models
+------
+
+# Final Plots and Summary
+
+
+### Plot One
+
+##### Histogram of the Debt To Income Ratio
+
+```{r echo=FALSE,message=FALSE, warning=FALSE, Plot_One}
+ggplot(aes(x = DebtToIncomeRatio),
+       data = subset(pld, !is.na(DebtToIncomeRatio))) +
+ geom_histogram(binwidth = 0.01 ,color = I('black'), fill = I('#099DD9')) +
+scale_x_continuous(limits = c(0,1)) +
+ggtitle("Debt To Income Ratio") +
+  xlab("Ratio")  
+```
+
+#### Description One
+
+The histogram is right skewed, after filtering the NA values\
+and excluding the outliers.After using summary function,I find\
+that the maximum value is 10.010,which is likely to be an error\
+.The highest ratio (peak) is 0.018. 
+
+
+### Plot Two
+
+##### MonthlyLoanPayment vs. Occupations
+
+```{r echo=FALSE, Plot_Two}
+ggplot(aes(y=MonthlyLoanPayment, x=Occupation), data = pld)+
+  stat_summary(fun.y=mean, geom='bar')+
+  theme(axis.text.x=element_text(angle=90, hjust=1,size=6))+
+  geom_bar(data = subset(pld,
+                    pld$Occupation=='Judge'|
+                    pld$Occupation=='Doctor'|
+                    pld$Occupation=='Pharmacist'), 
+           aes(y=MonthlyLoanPayment, x=Occupation), 
+           stat = 'summary', 
+           fun.y=mean, 
+           fill="#cf4c35")+
+  geom_bar(data = subset(pld,
+                    pld$Occupation=='Student - College Freshman'|
+                    pld$Occupation=='Student - College Graduate Student'|
+                    pld$Occupation=='Student - College Junior'|
+                    pld$Occupation=='Student - College Senior'|
+                    pld$Occupation=='Student - College Graduate Student'|
+                    pld$Occupation=='Student - College Sophomore'|
+                    pld$Occupation=='Student - Community College'|
+                    pld$Occupation=='Student - Technical School'  
+                      ), 
+           aes(y=MonthlyLoanPayment, x=Occupation), 
+           stat = 'summary', 
+           fun.y=mean, 
+           fill="#CFBC5F")+
+  
+  ylab('Monthly Payment [USD]')
+```
+
+#### Description Two
+
+The top 3 occupations have high monthly loan payment are $Judge$, $Doctor$,\
+and $Pharmacist$.The monthly loan payment should be positively correlated\
+with the salary.The top 3 listed occupations are all best-paying jobs\
+according to [CNBC](http://www.cnbc.com/2016/07/26/the-25-highest-paying\
+-jobs-in-america.\html), and the groups that have lower monthly loan\ 
+payment are students.
+
+### Plot Three
+
+##### Relationship between Delinquencies and Employment Status
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_Three}
+ggplot(aes(x = DelinquenciesLast7Years, y = AmountDelinquent,
+                      color = as.factor(EmploymentStatus)),
+       data = subset(pld, AmountDelinquent > 0 & 
+                            EmploymentStatus != "" )) +
+  geom_point(alpha = 0.1, size = 1) +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  xlim(0, quantile(pld$DelinquenciesLast7Years, 0.99, na.rm = T)) +
+  ylim(0, quantile(pld$AmountDelinquent, 0.99, na.rm = T)) +
+  scale_color_discrete(guide = guide_legend(title = "EmploymentStatus")) +
+ggtitle('Relationship between Delinquencies and Employment Status') +
+  xlab('DelinquenciesLast7Years [USD]') +
+  ylab('AmountDelinquent [USD]')
+```
+
+#### Description Three
+From the above we can see relationship between the\
+amount borrowers were delinquent and the number of\
+delinquencies they've had over the last 7 years then\
+separated that by employment status. Is obvious that\
+Employed and Full time are the maximum.\
+
+------
+
+# Reflection
+
+- This was somehow challenging but a good way to have a firm\
+grasp on doing exploratory data analysis with R. much\
+more difficult than I thought it would be.Specially it was hard\
+to get started without any financial knowledge., but in the end,\
+it was incredibly rewarding.
+
+
+- A simple way to show relationships among multi variables\
+is to add colors  to the plot. Using different colors to\
+represent factorial variables. The  point size of the scatter\
+plot can also be used to represent numerical  variables with\
+larger size associated with larger numerical values.
+
+- In the future, I think the analysis could be expanded to\
+try to predict interestrates on new loans.I think there is\
+enough information from the propser data that when combined\
+with general market yield curves, it could come close to\
+providing some prediction on where new loans would be given\
+a set of borrower characteristics.
+
+- The followings are some of the interesting features which\
+I observed during the exploratory analysis:
+
+  - Most of borrowers Income ranges from 25,000 - 74,999.
+  - There are 3 loan terms 12, 36 and 60 months and the most
+    popular one is 36 month.
+  - Borrower who home owner usually receive bigger loan than others.
+  - Employed person are more likley to take loan than others.
+  - Homeowners usually have lower risk of making defaulted loans
+    since bank can use their house as collateral.
+
+  
+# References
+- http://www.cookbook-r.com
+- https://www.statmethods.net/index.html
+- https://www.r-bloggers.com
+- http://www.r-tutor.com
+- https://jianru-shi.github.io/Prosper_Loan_EDA/Prosper_Loan_EDA.html
+
